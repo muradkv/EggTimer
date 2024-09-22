@@ -26,11 +26,24 @@ class ViewController: UIViewController {
         return label
     }()
     
+    let progressView: UIProgressView = {
+        let progressView = UIProgressView()
+        progressView.translatesAutoresizingMaskIntoConstraints = false
+        progressView.progressTintColor = .systemYellow
+        progressView.trackTintColor = .systemGray
+        progressView.progress = 0.5
+        return progressView
+    }()
+    
     let timerView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
+    
+    var timer = Timer()
+    var totalTime = 0
+    var secondsPassed = 0
 
     //MARK: - Lifecycle
     
@@ -50,6 +63,7 @@ class ViewController: UIViewController {
         mainVerticalStackView.addArrangedSubview(titleLabel)
         setupEggStackView()
         mainVerticalStackView.addArrangedSubview(timerView)
+        setupProgressView()
         
         NSLayoutConstraint.activate([
             mainVerticalStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -57,6 +71,18 @@ class ViewController: UIViewController {
             mainVerticalStackView.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor),
             mainVerticalStackView.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor)
         ])
+    }
+    
+    private func setupProgressView() {
+        timerView.addSubview(progressView)
+        
+        NSLayoutConstraint.activate([
+            progressView.heightAnchor.constraint(equalToConstant: 5),
+            progressView.leadingAnchor.constraint(equalTo: timerView.leadingAnchor),
+            progressView.trailingAnchor.constraint(equalTo: timerView.trailingAnchor),
+            progressView.centerYAnchor.constraint(equalTo: timerView.centerYAnchor)
+        ])
+        
     }
     
     private func setupEggStackView() {
@@ -69,8 +95,10 @@ class ViewController: UIViewController {
             UIImage(named: "hard_egg"),
         ]
         
-        let buttonTitle = [
-            "soft", "medium", "hard"
+        let buttonTitles = [
+            ("Soft", 5),
+            ("Medium", 10),
+            ("Hard", 13)
         ]
         
         images.enumerated().forEach { index, image in
@@ -79,7 +107,11 @@ class ViewController: UIViewController {
             
             let button = UIButton()
             button.translatesAutoresizingMaskIntoConstraints = false
-            button.setTitle(buttonTitle[index], for: .normal)
+            button.setTitle(buttonTitles[index].0, for: .normal)
+            button.addAction(UIAction { _ in
+                self.startTimer(count: buttonTitles[index].1 )
+                self.titleLabel.text = buttonTitles[index].0
+            }, for: .touchUpInside)
             
             let imageView = UIImageView()
             imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -102,6 +134,27 @@ class ViewController: UIViewController {
             ])
             
             stackView.addArrangedSubview(containerView)
+        }
+    }
+    
+    private func startTimer(count: Int ) {
+        timer.invalidate()
+        
+        totalTime = count
+        
+        progressView.progress = 0.0
+        secondsPassed = 0
+        
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { (Timer) in
+            if self.secondsPassed < self.totalTime {
+                
+                self.secondsPassed += 1
+                self.progressView.progress = Float(self.secondsPassed) / Float(self.totalTime)
+                
+            } else {
+                Timer.invalidate()
+                self.titleLabel.text = "DONE!"
+            }
         }
     }
 
